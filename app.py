@@ -3,6 +3,7 @@ import os
 import google.generativeai as genai
 from werkzeug.utils import secure_filename
 from pdfminer.high_level import extract_text
+import json
 
 app = Flask(__name__)
 
@@ -23,22 +24,28 @@ def extract_text_from_pdf(pdf_path):
 def send_to_gemini(pdf_text):
     genai.configure(api_key="AIzaSyAcvN5DD5d23fRVaHN6F6k8kPI-kJ4nN4A")
     model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+
     prompt = f"""
-    Extract the following details from the research paper:
-    - Title
-    - Authors
-    - Keywords
-    - DOI
-    - Journal/ Conference name
-    - Journal/ Conference website
-    - Affiliations
+    Extract the following details from the research paper and return the output as a JSON object:
+    {{
+        "Title": "<Title of the paper>",
+        "Authors": ["<List of authors>"],
+        "Keywords": ["<List of keywords>"],
+        "DOI": "<DOI if available>",
+        "Journal/ Conference name": "<Journal or Conference name>",
+        "Journal/ Conference website": "<URL of the Journal/Conference if available>",
+        "Affiliations": ["<List of affiliations>"]
+    }}
+    
     Text:
     {pdf_text}
     """
-    response = model.generate_content(prompt)
-    print(response)
-    return response.text if response else "Error retrieving response"
 
+    response = model.generate_content(prompt)
+    cleaned_text = response.text.replace("```json", "").replace("```", "").strip()
+    cleaned_text = json.loads(cleaned_text)
+    return cleaned_text
+    
 @app.route('/')
 def upload_form():
     return render_template('index.html')
@@ -59,9 +66,10 @@ def upload_file():
         pdf_text = extract_text_from_pdf(file_path)
         # print(pdf_text)
         gemini_response = send_to_gemini(pdf_text)
-        
+        #print(gemini_response)
         return render_template('results.html', filename=filename, response=gemini_response)
     return "Invalid file format. Only PDF allowed."
+
 
 @app.route('/success/<filename>')
 def upload_success(filename):
