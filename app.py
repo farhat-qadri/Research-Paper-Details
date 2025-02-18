@@ -36,6 +36,7 @@ def send_to_gemini(pdf_text):
     {pdf_text}
     """
     response = model.generate_content(prompt)
+    print(response)
     return response.text if response else "Error retrieving response"
 
 @app.route('/')
@@ -56,7 +57,7 @@ def upload_file():
         
         # Extract text and send to Gemini
         pdf_text = extract_text_from_pdf(file_path)
-        print(pdf_text)
+        # print(pdf_text)
         gemini_response = send_to_gemini(pdf_text)
         
         return render_template('results.html', filename=filename, response=gemini_response)

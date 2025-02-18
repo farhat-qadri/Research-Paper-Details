@@ -1,0 +1,6 @@
+flask
+werkzeug
+google-generativeai
+pdfminer.six
+pandas
+openpyxl
