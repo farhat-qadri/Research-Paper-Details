@@ -44,6 +44,8 @@ def send_to_gemini(pdf_text):
     response = model.generate_content(prompt)
     cleaned_text = response.text.replace("```json", "").replace("```", "").strip()
     cleaned_text = json.loads(cleaned_text)
+    print("HAHHAHAHAAHAH")
+    print(cleaned_text)
     return cleaned_text
     
 @app.route('/')
@@ -54,21 +56,33 @@ def upload_form():
 def upload_file():
     if 'file' not in request.files:
         return redirect(request.url)
-    file = request.files['file']
-    if file.filename == '':
+    
+    files = request.files.getlist('file')
+    if not files:
         return redirect(request.url)
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
+    
+    results = []  # List to store response details for each file
+    
+    for file in files:
+        if file.filename == '':
+            continue  # Skip files with no filename
         
-        # Extract text and send to Gemini
-        pdf_text = extract_text_from_pdf(file_path)
-        # print(pdf_text)
-        gemini_response = send_to_gemini(pdf_text)
-        #print(gemini_response)
-        return render_template('results.html', filename=filename, response=gemini_response)
-    return "Invalid file format. Only PDF allowed."
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            
+            # Extract text and send to Gemini for this file
+            pdf_text = extract_text_from_pdf(file_path)
+            gemini_response = send_to_gemini(pdf_text)
+            
+            results.append({
+                'filename': filename,
+                'response': gemini_response
+            })
+    
+    return render_template('results.html', response=results)
+
 
 
 @app.route('/success/<filename>')
