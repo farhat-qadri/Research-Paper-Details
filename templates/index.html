@@ -43,12 +43,13 @@
 </head>
 <body>
     <div class="container">
-        <h2>Upload a Research Paper (PDF)</h2>
+        <h2>Upload Research Papers (PDFs)</h2>
         <form action="/upload" method="post" enctype="multipart/form-data">
-            <input type="file" name="file" accept=".pdf" required>
+            <input type="file" name="file" accept=".pdf" required multiple>
             <br>
             <button type="submit">Upload</button>
         </form>
     </div>
+    
 </body>
 </html>
