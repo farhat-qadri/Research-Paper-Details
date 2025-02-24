@@ -63,20 +63,22 @@
 <body>
     <div class="container">
         <h2>Extracted Research Paper Details</h2>
-        <p><strong>Uploaded File:</strong> <span id="filename">{{ filename }}</span></p>
-        <h3>Extracted Information</h3>
         <table id="data-table">
             <thead>
                 <tr>
-                    <th>Field</th>
-                    <th>Details</th>
+                    {% if response|length > 0 %}
+                        {% for key in response[0].response.keys() %}
+                            <th>{{ key }}</th>
+                        {% endfor %}
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
-                {% for key, value in response.items() %}
+                {% for file in response %}
                 <tr>
-                    <td>{{ key }}</td>
+                    {% for value in file.response.values() %}
                     <td>{{ value }}</td>
+                    {% endfor %}
                 </tr>
                 {% endfor %}
             </tbody>
@@ -85,25 +87,40 @@
         <a href="/">Upload Another Paper</a>
     </div>
 
-    <script>
-        function downloadExcel() {
-            let table = document.getElementById("data-table");
-            let rows = table.getElementsByTagName("tr");
-            let data = [];
 
-            for (let i = 1; i < rows.length; i++) { // Skip header
-                let cells = rows[i].getElementsByTagName("td");
-                data.push({
-                    "Field": cells[0].innerText,
-                    "Details": cells[1].innerText
-                });
-            }
 
-            let ws = XLSX.utils.json_to_sheet(data);
-            let wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Research Details");
-            XLSX.writeFile(wb, "Extracted_Research_Details.xlsx");
-        }
-    </script>
+<script>
+    function downloadExcel() {
+        let table = document.getElementById("data-table");
+
+        // Get the headers (keys)
+        let headerCells = table.querySelector("thead tr").querySelectorAll("th");
+        let headers = [];
+        headerCells.forEach(cell => {
+            headers.push(cell.innerText.trim());
+        });
+
+        // Get all rows of data
+        let dataRows = table.querySelectorAll("tbody tr");
+        let data = [];
+
+        dataRows.forEach(row => {
+            let dataCells = row.querySelectorAll("td");
+            let rowData = {};
+            headers.forEach((header, index) => {
+                rowData[header] = dataCells[index].innerText.trim();
+            });
+            data.push(rowData);
+        });
+
+        // Convert the array of objects into a sheet and create a workbook
+        let ws = XLSX.utils.json_to_sheet(data);
+        let wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Research Details");
+        XLSX.writeFile(wb, "Extracted_Research_Details.xlsx");
+    }
+</script>
+
+    
 </body>
 </html>
